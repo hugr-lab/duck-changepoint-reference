@@ -1,6 +1,6 @@
 # duck-changepoint-reference
 
-Reference datasets and tests that compare the [`cpt` DuckDB extension](https://github.com/oluies/duck-changepoint)
+Reference datasets and tests that compare the [`cpt` DuckDB extension](https://github.com/hugr-lab/duck-changepoint)
 with R's [changepoint](https://cran.r-project.org/package=changepoint) package.
 
 This material lives in its own repository because three of the datasets are distributed with

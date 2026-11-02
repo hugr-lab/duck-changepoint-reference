@@ -1,6 +1,6 @@
 .PHONY: test reference-data help
 
-# The cpt extension under test, built from https://github.com/oluies/duck-changepoint
+# The cpt extension under test, built from https://github.com/hugr-lab/duck-changepoint
 CPT_EXTENSION ?= ../duck-changepoint/build/release/cpt.duckdb_extension
 DUCKDB_VERSION ?= 2.0.0
 PYTHON_BIN ?= python3
