@@ -18,13 +18,19 @@ tools/export_reference.R regenerates test/data
 
 ## Running
 
-Build `cpt` next to this repository (`../duck-changepoint`, `make configure release`), then:
+Build `cpt` next to this repository, in `../duck-changepoint`, then run the tests on the DuckDB that build
+is for:
 
 ```sh
-make test                                   # DuckDB 2.0.0
-make test DUCKDB_VERSION=1.5.6              # oldest supported DuckDB
+make test                                   # main (GEN=ninja make release): DuckDB 2.0.0
+make test DUCKDB_VERSION=1.5.6              # the v1.5.x branch (make configure release): DuckDB 1.5.x
 make test CPT_EXTENSION=/path/to/cpt.duckdb_extension
 ```
+
+`main` is a C++ extension built with DuckDB 2.0.0, and loads only into that release; it builds to
+`build/release/extension/cpt/cpt.duckdb_extension`. The `v1.5.x` branch keeps the stable C API build,
+which loads into DuckDB 1.5.6 and later, at `build/release/cpt.duckdb_extension`. `make test` uses the
+first of the two that exists.
 
 ## What is checked
 
