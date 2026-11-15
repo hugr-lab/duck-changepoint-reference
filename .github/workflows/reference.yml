@@ -1,0 +1,82 @@
+#
+# test/sql/cpt_reference.test (cpt against R changepoint 2.3) on the cpt builds users get or will get:
+#
+#   released  cpt as INSTALL cpt FROM community installs it, on DuckDB 2.0.0. No build.
+#   v1.5.x    the v1.5.x branch of duck-changepoint (the stable C API build), on DuckDB 1.5.6. A few
+#             minutes: it builds only the extension.
+#   main      the main branch of duck-changepoint (the C++ extension), on DuckDB 2.0.0. About half an hour,
+#             since it builds DuckDB, so it runs on the weekly schedule and by hand, not on every pull request.
+#
+# The weekly run is what notices a change in duck-changepoint that breaks agreement with R changepoint:
+# this repository changes rarely, the extension does not.
+#
+name: Reference tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"   # Mondays 05:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  released:
+    name: released cpt (community), DuckDB 2.0.0
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install cpt from the community extensions
+        run: |
+          python3 -m pip install -q duckdb==2.0.0
+          path=$(python3 -c "import duckdb; con = duckdb.connect(); con.execute('INSTALL cpt FROM community'); print(con.execute(\"SELECT install_path FROM duckdb_extensions() WHERE extension_name = 'cpt'\").fetchone()[0])")
+          echo "cpt: $path"
+          echo "CPT_EXTENSION=$path" >> "$GITHUB_ENV"
+      - run: make test DUCKDB_VERSION=2.0.0
+
+  v1_5_x:
+    name: v1.5.x branch (C API), DuckDB 1.5.6
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hugr-lab/duck-changepoint
+          ref: v1.5.x
+          path: duck-changepoint
+          submodules: recursive
+          fetch-depth: 0   # the extension's version footer comes from git describe
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build cpt (v1.5.x)
+        run: make -C duck-changepoint configure release
+      - run: make test DUCKDB_VERSION=1.5.6 CPT_EXTENSION=duck-changepoint/build/release/cpt.duckdb_extension
+
+  main:
+    name: main branch (C++), DuckDB 2.0.0
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hugr-lab/duck-changepoint
+          ref: main
+          path: duck-changepoint
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: seanmiddleditch/gha-setup-ninja@v6
+      - name: Build cpt (main, with DuckDB v2.0.0)
+        run: GEN=ninja make -C duck-changepoint release
+      - run: make test DUCKDB_VERSION=2.0.0 CPT_EXTENSION=duck-changepoint/build/release/extension/cpt/cpt.duckdb_extension
