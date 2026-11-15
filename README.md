@@ -32,6 +32,13 @@ make test CPT_EXTENSION=/path/to/cpt.duckdb_extension
 which loads into DuckDB 1.5.6 and later, at `build/release/cpt.duckdb_extension`. `make test` uses the
 first of the two that exists.
 
+## CI
+
+`.github/workflows/reference.yml` runs the tests against three builds of cpt: the one `INSTALL cpt FROM
+community` installs (DuckDB 2.0.0) and the `v1.5.x` branch (DuckDB 1.5.6) on every pull request, push and
+weekly run; duck-changepoint's `main` (DuckDB 2.0.0) weekly and by hand, since it builds DuckDB. The weekly
+run is what notices a change in the extension that breaks agreement with R changepoint.
+
 ## What is checked
 
 - **Nile.** `cpt.mean` on the series scaled by its sd gives `[28, 100]` (the change after 1898) for BIC
